@@ -89,20 +89,5 @@ contactForm?.addEventListener("submit", (event) => {
   ];
 
   formNote.textContent = "Открываем ваше почтовое приложение с заполненной заявкой…";
-  window.location.href = `mailto:hello@northrefresh.ru?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
-});
-
-document.querySelector("[data-copy-email]")?.addEventListener("click", async (event) => {
-  event.preventDefault();
-  const email = "hello@northrefresh.ru";
-
-  try {
-    await navigator.clipboard.writeText(email);
-    event.currentTarget.textContent = "Email скопирован";
-    setTimeout(() => {
-      event.currentTarget.textContent = email;
-    }, 1800);
-  } catch {
-    window.location.href = `mailto:${email}`;
-  }
+  window.location.href = `mailto:max_brus@mail.ru?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
 });
