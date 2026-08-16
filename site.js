@@ -79,6 +79,22 @@ function setFormStatus(message, state = "") {
   if (state) formNote.classList.add(`is-${state}`);
 }
 
+async function getSubmissionError(response) {
+  try {
+    const result = await response.json();
+    const errors = Array.isArray(result.errors)
+      ? result.errors.map((item) => item.message).filter(Boolean)
+      : [];
+
+    if (errors.length) return errors.join("; ");
+    if (result.error) return String(result.error);
+  } catch {
+    // Formspree did not return a JSON error body.
+  }
+
+  return `сервис вернул код ${response.status}`;
+}
+
 contactForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -101,9 +117,7 @@ contactForm?.addEventListener("submit", async (event) => {
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`Formspree returned ${response.status}`);
-    }
+    if (!response.ok) throw new Error(await getSubmissionError(response));
 
     contactForm.reset();
     setPeople(12);
@@ -111,7 +125,12 @@ contactForm?.addEventListener("submit", async (event) => {
     if (submitButton) submitButton.textContent = "Заявка отправлена";
   } catch (error) {
     console.error("Form submission failed", error);
-    setFormStatus("Не удалось отправить заявку. Попробуйте ещё раз или напишите на hello@northrefresh.ru.", "error");
+    const rawReason = error instanceof Error ? error.message : "неизвестная ошибка";
+    const networkFailure = /failed to fetch|load failed|network|fetch/i.test(rawReason);
+    const reason = networkFailure
+      ? "браузер не смог соединиться с сервисом отправки"
+      : rawReason;
+    setFormStatus(`Не удалось отправить заявку: ${reason}. Попробуйте ещё раз или напишите на hello@northrefresh.ru.`, "error");
     if (submitButton) submitButton.textContent = "Повторить отправку";
   } finally {
     if (submitButton) {
