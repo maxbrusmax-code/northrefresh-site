@@ -68,26 +68,57 @@ window.addEventListener("resize", () => {
 
 const contactForm = document.querySelector("#contact-form");
 const formNote = document.querySelector("#form-note");
+const submitButton = contactForm?.querySelector('button[type="submit"]');
+const defaultSubmitText = submitButton?.textContent || "Отправить заявку";
 
-contactForm?.addEventListener("submit", (event) => {
+function setFormStatus(message, state = "") {
+  if (!formNote) return;
+
+  formNote.textContent = message;
+  formNote.classList.remove("is-success", "is-error");
+  if (state) formNote.classList.add(`is-${state}`);
+}
+
+contactForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const data = new FormData(contactForm);
-  const subject = `Заявка North Refresh — ${data.get("name") || "новый запрос"}`;
-  const lines = [
-    "Здравствуйте! Хочу обсудить ретрит North Refresh.",
-    "",
-    `Имя: ${data.get("name") || "—"}`,
-    `Компания / проект: ${data.get("company") || "—"}`,
-    `Формат: ${data.get("format") || "—"}`,
-    `Количество участников: ${data.get("participants") || "—"}`,
-    `Желаемые даты: ${data.get("dates") || "—"}`,
-    `Телефон / Telegram / email: ${data.get("contact") || "—"}`,
-    "",
-    "Задача:",
-    data.get("task") || "—",
-  ];
+  const requesterName = String(data.get("name") || "Новый запрос").trim();
+  data.set("_subject", `Заявка North Refresh — ${requesterName}`);
 
-  formNote.textContent = "Открываем ваше почтовое приложение с заполненной заявкой…";
-  window.location.href = `mailto:max_brus@mail.ru?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Отправляем…";
+  }
+  setFormStatus("Отправляем заявку…");
+
+  try {
+    const response = await fetch(contactForm.action, {
+      method: "POST",
+      body: data,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Formspree returned ${response.status}`);
+    }
+
+    contactForm.reset();
+    setPeople(12);
+    setFormStatus("Заявка отправлена. Мы свяжемся с вами в течение рабочего дня.", "success");
+    if (submitButton) submitButton.textContent = "Заявка отправлена";
+  } catch (error) {
+    console.error("Form submission failed", error);
+    setFormStatus("Не удалось отправить заявку. Попробуйте ещё раз или напишите на hello@northrefresh.ru.", "error");
+    if (submitButton) submitButton.textContent = "Повторить отправку";
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      window.setTimeout(() => {
+        submitButton.textContent = defaultSubmitText;
+      }, 4000);
+    }
+  }
 });
