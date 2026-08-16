@@ -409,7 +409,12 @@
             <a class="contact-email" href="mailto:max_brus@mail.ru">hello@northrefresh.ru</a>
           </div>
 
-          <form class="contact-form" id="contact-form">
+          <form class="contact-form" id="contact-form" action="https://formspree.io/f/moeangbe" method="POST">
+            <input type="hidden" name="source" value="northrefresh.ru">
+            <label class="sr-only" aria-hidden="true">
+              <span>Не заполняйте это поле</span>
+              <input type="text" name="_gotcha" tabindex="-1" autocomplete="off">
+            </label>
             <label class="field">
               <span>Имя *</span>
               <input type="text" name="name" autocomplete="name" required placeholder="Как к вам обращаться">
@@ -445,8 +450,8 @@
               <span>Задача ретрита</span>
               <textarea name="task" placeholder="Что должно измениться или проясниться по итогам трёх дней"></textarea>
             </label>
-            <button class="button button-primary" type="submit">Подготовить заявку</button>
-            <p class="form-note" id="form-note">Кнопка откроет почтовое приложение с заполненной заявкой. Ваши данные не сохраняются на сайте.</p>
+            <button class="button button-primary" type="submit">Отправить заявку</button>
+            <p class="form-note" id="form-note" role="status" aria-live="polite">Заявка будет отправлена напрямую команде North Refresh — почтовое приложение не откроется.</p>
           </form>
         </div>
       </section>
