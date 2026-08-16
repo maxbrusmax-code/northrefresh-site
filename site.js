@@ -84,7 +84,7 @@ contactForm?.addEventListener("submit", async (event) => {
 
   const data = new FormData(contactForm);
   const requesterName = String(data.get("name") || "Новый запрос").trim();
-  data.set("_subject", `Заявка North Refresh — ${requesterName}`);
+  data.set("subject", `Заявка North Refresh — ${requesterName}`);
 
   if (submitButton) {
     submitButton.disabled = true;
