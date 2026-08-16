@@ -443,8 +443,12 @@
               <input type="text" name="dates" placeholder="Месяц или ориентир">
             </label>
             <label class="field">
-              <span>Телефон, Telegram или email *</span>
-              <input type="text" name="contact" autocomplete="email" required placeholder="Удобный контакт">
+              <span>Email *</span>
+              <input type="email" name="email" inputmode="email" autocomplete="email" required placeholder="name@company.ru">
+            </label>
+            <label class="field">
+              <span>Телефон или Telegram</span>
+              <input type="text" name="phone" inputmode="tel" autocomplete="tel" placeholder="+7 999 000-00-00 или @username">
             </label>
             <label class="field field-full">
               <span>Задача ретрита</span>
