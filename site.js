@@ -143,7 +143,7 @@ contactForm?.addEventListener("submit", async (event) => {
     const reason = timedOut ? "не удалось дождаться подтверждения; заявка могла быть принята — проверьте перед повторной отправкой" : networkFailure
       ? "браузер не смог соединиться с сервисом отправки"
       : rawReason;
-    setFormStatus(`Не удалось отправить заявку: ${reason}. Попробуйте ещё раз или напишите на max_brus@mail.ru.`, "error");
+    setFormStatus(`Не удалось отправить заявку: ${reason}. Попробуйте ещё раз или воспользуйтесь ссылкой email в разделе «Контакты».`, "error");
     if (submitButton) submitButton.textContent = "Повторить отправку";
   } finally {
     window.clearTimeout(timeout);
