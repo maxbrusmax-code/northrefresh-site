@@ -26,10 +26,10 @@ function setPeople(count) {
     option.setAttribute("aria-pressed", String(active));
   });
 
-  perPersonOutput.textContent = money.format(price.perPerson);
-  totalOutput.textContent = money.format(price.total);
+  if (perPersonOutput) perPersonOutput.textContent = money.format(price.perPerson);
+  if (totalOutput) totalOutput.textContent = money.format(price.total);
 
-  if (participantsField && !participantsField.value) {
+  if (participantsField) {
     participantsField.value = String(count);
   }
 }
@@ -38,7 +38,7 @@ peopleOptions.forEach((option) => {
   option.addEventListener("click", () => setPeople(Number(option.dataset.people)));
 });
 
-setPeople(12);
+if (peopleOptions.length) setPeople(12);
 
 const menuToggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".site-nav");
@@ -56,6 +56,10 @@ menuToggle?.addEventListener("click", () => {
   menuToggle.setAttribute("aria-expanded", String(open));
   navigation.classList.toggle("open", open);
   document.body.classList.toggle("menu-open", open);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && navigation?.classList.contains("open")) { closeMenu(); menuToggle?.focus(); }
 });
 
 navigation?.querySelectorAll("a").forEach((link) => {
@@ -98,7 +102,10 @@ async function getSubmissionError(response) {
 contactForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  if (submitButton?.disabled) return;
+  if (!contactForm.reportValidity()) return;
   const data = new FormData(contactForm);
+  data.set("page", window.location.origin + window.location.pathname);
   const requesterName = String(data.get("name") || "Новый запрос").trim();
   data.set("subject", `Заявка North Refresh — ${requesterName}`);
 
@@ -108,9 +115,12 @@ contactForm?.addEventListener("submit", async (event) => {
   }
   setFormStatus("Отправляем заявку…");
 
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 20000);
   try {
     const response = await fetch(contactForm.action, {
       method: "POST",
+      signal: controller.signal,
       body: data,
       headers: {
         Accept: "application/json",
@@ -119,20 +129,24 @@ contactForm?.addEventListener("submit", async (event) => {
 
     if (!response.ok) throw new Error(await getSubmissionError(response));
 
+    const result = await response.json();
+    if (result.ok !== true) throw new Error("сервис не подтвердил приём заявки");
     contactForm.reset();
     setPeople(12);
-    setFormStatus("Заявка отправлена. Мы свяжемся с вами в течение рабочего дня.", "success");
+    setFormStatus("Сервис принял заявку. Если ответа нет в течение рабочего дня, свяжитесь с нами по email ниже.", "success");
     if (submitButton) submitButton.textContent = "Заявка отправлена";
   } catch (error) {
     console.error("Form submission failed", error);
     const rawReason = error instanceof Error ? error.message : "неизвестная ошибка";
+    const timedOut = error instanceof Error && error.name === "AbortError";
     const networkFailure = /failed to fetch|load failed|network|fetch/i.test(rawReason);
-    const reason = networkFailure
+    const reason = timedOut ? "не удалось дождаться подтверждения; заявка могла быть принята — проверьте перед повторной отправкой" : networkFailure
       ? "браузер не смог соединиться с сервисом отправки"
       : rawReason;
-    setFormStatus(`Не удалось отправить заявку: ${reason}. Попробуйте ещё раз или напишите на hello@northrefresh.ru.`, "error");
+    setFormStatus(`Не удалось отправить заявку: ${reason}. Попробуйте ещё раз или воспользуйтесь ссылкой email в разделе «Контакты».`, "error");
     if (submitButton) submitButton.textContent = "Повторить отправку";
   } finally {
+    window.clearTimeout(timeout);
     if (submitButton) {
       submitButton.disabled = false;
       window.setTimeout(() => {
