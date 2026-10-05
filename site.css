@@ -44,3 +44,12 @@ body{font-size:16px;line-height:1.65}.section{padding:80px 0}.section-topless{pa
 .participant-price{font-size:46px}.participant-price .price-from{font-size:23px}.participant-price .price-unit{margin-top:8px}.project-total strong{font-weight:650}.expert-topics{display:grid;grid-template-columns:1fr 1fr;gap:36px 50px}.expert-topics article{border-top:1px solid var(--line);padding-top:24px}.expert-topics h3{font-size:23px}.expert-topics p{font-size:16px;color:var(--muted);line-height:1.65;margin-bottom:12px}.expert-topics p:last-child{margin:0}.expert-topics strong{font-weight:650;color:var(--ink)}.expert-selection{display:grid;grid-template-columns:1fr 1fr;gap:50px;max-width:1050px}.expert-selection p{font-size:17px;color:var(--muted);margin:0}.program-demo{margin-bottom:28px}.management-example{max-width:800px}.management-example h3{font-size:24px}.management-example>p:not(.demo-label){font-size:17px;line-height:1.7;color:var(--muted)}.management-example dl{margin:28px 0 0}.management-example dl>div{display:grid;grid-template-columns:150px 1fr;gap:25px;padding:17px 0;border-top:1px solid #c7d0bf}.management-example dt{font-size:14px;font-weight:650}.management-example dd{font-size:16px;color:var(--muted);margin:0}
 @media(max-width:680px){.participant-price{font-size:40px}.participant-price .price-from{font-size:21px}.expert-topics{grid-template-columns:1fr;gap:26px}.expert-topics article{padding-top:20px}.expert-topics h3{font-size:21px}.expert-selection{grid-template-columns:1fr;gap:18px}.expert-selection p{font-size:16px}.management-example h3{font-size:22px}.management-example>p:not(.demo-label){font-size:16px}.management-example dl>div{grid-template-columns:1fr;gap:6px;padding:15px 0}.management-example dt{font-size:13px}.management-example dd{font-size:16px}}
 @media(max-width:360px){.participant-price{font-size:38px}}
+
+/* Price figures share one baseline; amount and currency stay together. */
+.participant-price{font-family:Manrope,Arial,sans-serif;font-size:40px;font-weight:600;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.035em}
+.participant-price .price-amount{display:block;font-size:inherit;white-space:nowrap}
+.participant-price .price-from{font-size:20px;font-weight:500;letter-spacing:0}
+.participant-price .price-currency{font-size:inherit}
+.participant-price .price-unit{margin-top:10px;font-size:16px;font-weight:500}
+@media(max-width:680px){.participant-price{font-size:36px}}
+@media(max-width:360px){.participant-price{font-size:32px}}
