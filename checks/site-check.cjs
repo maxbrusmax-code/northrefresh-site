@@ -30,6 +30,12 @@ const sizes = [{width:1440,height:1000},{width:1366,height:768},{width:1024,heig
   }
  }
  for(const url of links){await page.goto(url);const anchor=new URL(url).hash;if(anchor)assert.ok(await page.locator(anchor).count(),`Missing anchor ${url}`)}
+ for(const path of ['/404/', '/404.html']) {
+  await page.goto(base+path);
+  assert.equal(await page.locator('meta[name="robots"]').getAttribute('content'), 'noindex,follow');
+  assert.equal(await page.locator('a[href="#contact"]').count(), 0);
+  assert.equal(await page.locator('a[href="/#contact"]').count(), 3);
+ }
  for(const path of ['/korporativnyy-retrit/','/strategicheskaya-sessiya/']){await page.goto(base+path);await page.waitForURL(base+'/');}
  await page.setViewportSize({width:390,height:844});await page.goto(base+'/');
  await page.getByRole('button',{name:'Открыть меню'}).click();assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'true');
@@ -43,6 +49,15 @@ const sizes = [{width:1440,height:1000},{width:1366,height:768},{width:1024,heig
  for(const path of paths){
   await page.goto(base+path);await page.locator('#name').fill('Тестовая проверка');await page.locator('#contact-detail').fill('qa@example.com');await page.locator('#task').fill('Автоматическая проверка, без реальной отправки.');await page.locator('#contact-form button').click();await page.waitForFunction(()=>document.querySelector('#form-note').classList.contains('is-success'));assert.ok(submission.includes('qa@example.com'));assert.equal(await page.locator('#name').inputValue(),'');
  }
+ await page.goto(base+'/?utm_source=qa&utm_medium=test&utm_campaign=launch&unrelated=excluded');
+ await page.getByRole('button',{name:'Открыть меню'}).click();
+ await page.locator('.site-nav').getByRole('link',{name:'Эксперт',exact:true}).click();
+ await page.waitForURL(base+'/podbor-eksperta/');
+ await page.locator('#name').fill('Проверка источника');await page.locator('#contact-detail').fill('qa@example.com');
+ await page.locator('#contact-form button').click();await page.waitForFunction(()=>document.querySelector('#form-note').classList.contains('is-success'));
+ assert.ok(/name="utm_source"\r\n\r\nqa/.test(submission));
+ assert.ok(/name="utm_campaign"\r\n\r\nlaunch/.test(submission));
+ assert.ok(!submission.includes('unrelated'));
  await page.unroute('https://formspree.io/**');
  for(const reply of [{status:422,body:'{"errors":[{"message":"Rejected"}]}'},{status:200,body:'{}'}]){
   await page.route('https://formspree.io/**',route=>route.fulfill({status:reply.status,contentType:'application/json',body:reply.body}));

@@ -27,6 +27,31 @@ document.addEventListener('keydown', event => {
   }
 });
 window.addEventListener('resize', () => { if (window.innerWidth > 900) closeMenu(); });
+// Keep the campaign source while the visitor moves between pages. No form content
+// or arbitrary query parameters are stored here; storage denial is non-blocking.
+function readAttribution() {
+  const key = 'northrefresh:source';
+  const params = new URLSearchParams(window.location.search);
+  const campaignKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  let saved = {};
+  try { saved = JSON.parse(sessionStorage.getItem(key) || '{}') || {}; } catch (_) {}
+  const campaign = {};
+  campaignKeys.forEach(name => {
+    const value = params.get(name)?.trim();
+    if (value) campaign[name] = value.slice(0, 200);
+  });
+  if (!saved.landing_page || Object.keys(campaign).length) {
+    let referrer = '';
+    try {
+      const source = new URL(document.referrer);
+      if (source.origin !== window.location.origin) referrer = source.origin;
+    } catch (_) {}
+    saved = {landing_page: window.location.pathname, referrer, ...campaign};
+    try { sessionStorage.setItem(key, JSON.stringify(saved)); } catch (_) {}
+  }
+  return saved;
+}
+const attribution = readAttribution();
 // Events expose funnel stages without transmitting form content to analytics.
 function track(name) {
   window.dispatchEvent(new CustomEvent(`northrefresh:${name}`, {detail: {page: window.location.pathname}}));
@@ -53,6 +78,9 @@ form?.addEventListener('submit', async event => {
   data.set('name', name);
   data.set('contact', contact);
   data.set('page', window.location.origin + window.location.pathname);
+  ['landing_page', 'referrer', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(key => {
+    if (typeof attribution[key] === 'string' && attribution[key]) data.set(key, attribution[key].slice(0, 200));
+  });
   data.set('subject', `Запрос North Refresh — ${name}`);
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) data.set('email', contact);
   submitButton.disabled = true;
@@ -68,7 +96,7 @@ form?.addEventListener('submit', async event => {
     form.reset();
     formStarted = false;
     track('form_success');
-    setStatus('Заявка отправлена. Свяжемся по указанному контакту.', 'success');
+    setStatus('Запрос получен. Свяжемся по указанному контакту, чтобы обсудить задачу, состав команды и формат выезда.', 'success');
     submitButton.textContent = 'Запрос отправлен';
   } catch (error) {
     track('form_error');
