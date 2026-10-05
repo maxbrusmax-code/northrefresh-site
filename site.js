@@ -68,13 +68,13 @@ form?.addEventListener('submit', async event => {
     form.reset();
     formStarted = false;
     track('form_success');
-    setStatus('Запрос принят. Свяжемся по указанному контакту. Если ответа нет в течение рабочего дня, напишите на max_brus@mail.ru.', 'success');
+    setStatus('Заявка отправлена. Свяжемся по указанному контакту.', 'success');
     submitButton.textContent = 'Запрос отправлен';
   } catch (error) {
     track('form_error');
     setStatus(error?.name === 'AbortError'
-      ? 'Не получили подтверждение отправки. Запрос мог быть принят. Чтобы избежать повтора, напишите на max_brus@mail.ru.'
-      : 'Не удалось подтвердить отправку. Данные сохранены в форме. Попробуйте ещё раз или напишите на max_brus@mail.ru.', 'error');
+      ? 'Отправка заняла больше времени. Данные сохранены в форме. Попробуйте позже.'
+      : 'Не удалось подтвердить отправку. Данные сохранены в форме. Попробуйте ещё раз.', 'error');
     submitButton.textContent = 'Повторить отправку';
   } finally { window.clearTimeout(timeout); submitButton.disabled = false; }
 });
