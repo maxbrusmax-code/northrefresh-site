@@ -1,157 +1,80 @@
-const priceMap = {
-  12: { perPerson: 120000, total: 1440000 },
-  15: { perPerson: 100000, total: 1500000 },
-  18: { perPerson: 90000, total: 1620000 },
-  24: { perPerson: 80000, total: 1920000 },
-};
-
-const money = new Intl.NumberFormat("ru-RU", {
-  style: "currency",
-  currency: "RUB",
-  maximumFractionDigits: 0,
-});
-
-const peopleOptions = document.querySelectorAll("[data-people]");
-const perPersonOutput = document.querySelector("[data-price-person]");
-const totalOutput = document.querySelector("[data-price-total]");
-const participantsField = document.querySelector("#participants");
-
-function setPeople(count) {
-  const price = priceMap[count];
-  if (!price) return;
-
-  peopleOptions.forEach((option) => {
-    const active = Number(option.dataset.people) === count;
-    option.classList.toggle("active", active);
-    option.setAttribute("aria-pressed", String(active));
-  });
-
-  if (perPersonOutput) perPersonOutput.textContent = money.format(price.perPerson);
-  if (totalOutput) totalOutput.textContent = money.format(price.total);
-
-  if (participantsField) {
-    participantsField.value = String(count);
-  }
-}
-
-peopleOptions.forEach((option) => {
-  option.addEventListener("click", () => setPeople(Number(option.dataset.people)));
-});
-
-if (peopleOptions.length) setPeople(12);
-
-const menuToggle = document.querySelector(".menu-toggle");
-const navigation = document.querySelector(".site-nav");
-
+'use strict';
+const menuToggle = document.querySelector('.menu-toggle');
+const navigation = document.querySelector('.site-nav');
 function closeMenu() {
-  menuToggle?.classList.remove("active");
-  menuToggle?.setAttribute("aria-expanded", "false");
-  navigation?.classList.remove("open");
-  document.body.classList.remove("menu-open");
+  menuToggle?.classList.remove('active');
+  menuToggle?.setAttribute('aria-expanded', 'false');
+  menuToggle?.setAttribute('aria-label', 'Открыть меню');
+  navigation?.classList.remove('open');
+  document.body.classList.remove('menu-open');
 }
-
-menuToggle?.addEventListener("click", () => {
-  const open = !navigation.classList.contains("open");
-  menuToggle.classList.toggle("active", open);
-  menuToggle.setAttribute("aria-expanded", String(open));
-  navigation.classList.toggle("open", open);
-  document.body.classList.toggle("menu-open", open);
+menuToggle?.addEventListener('click', () => {
+  const open = !navigation.classList.contains('open');
+  menuToggle.classList.toggle('active', open);
+  menuToggle.setAttribute('aria-expanded', String(open));
+  menuToggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+  navigation.classList.toggle('open', open);
+  document.body.classList.toggle('menu-open', open);
 });
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && navigation?.classList.contains("open")) { closeMenu(); menuToggle?.focus(); }
-});
-
-navigation?.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", closeMenu);
-});
-
-window.addEventListener("resize", () => {
-  if (window.innerWidth > 760) closeMenu();
-});
-
-const contactForm = document.querySelector("#contact-form");
-const formNote = document.querySelector("#form-note");
-const submitButton = contactForm?.querySelector('button[type="submit"]');
-const defaultSubmitText = submitButton?.textContent || "Отправить заявку";
-
-function setFormStatus(message, state = "") {
-  if (!formNote) return;
-
-  formNote.textContent = message;
-  formNote.classList.remove("is-success", "is-error");
-  if (state) formNote.classList.add(`is-${state}`);
-}
-
-async function getSubmissionError(response) {
-  try {
-    const result = await response.json();
-    const errors = Array.isArray(result.errors)
-      ? result.errors.map((item) => item.message).filter(Boolean)
-      : [];
-
-    if (errors.length) return errors.join("; ");
-    if (result.error) return String(result.error);
-  } catch {
-    // Formspree did not return a JSON error body.
+navigation?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+document.querySelector('.header-action')?.addEventListener('click', closeMenu);
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && navigation?.classList.contains('open')) { closeMenu(); menuToggle?.focus(); }
+  if (event.key === 'Tab' && navigation?.classList.contains('open')) {
+    const items = [document.querySelector('.brand'), ...navigation.querySelectorAll('a'), document.querySelector('.header-action'), menuToggle].filter(Boolean);
+    if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items.at(-1).focus(); }
+    else if (!event.shiftKey && document.activeElement === items.at(-1)) { event.preventDefault(); items[0].focus(); }
   }
-
-  return `сервис вернул код ${response.status}`;
+});
+window.addEventListener('resize', () => { if (window.innerWidth > 900) closeMenu(); });
+// Events expose funnel stages without transmitting form content to analytics.
+function track(name) {
+  window.dispatchEvent(new CustomEvent(`northrefresh:${name}`, {detail: {page: window.location.pathname}}));
 }
-
-contactForm?.addEventListener("submit", async (event) => {
+document.querySelectorAll('a[href$="#contact"]').forEach(link => link.addEventListener('click', () => track('contact_click')));
+const form = document.querySelector('#contact-form');
+const note = document.querySelector('#form-note');
+const submitButton = form?.querySelector('button[type="submit"]');
+let formStarted = false;
+form?.addEventListener('input', () => { if (!formStarted) { formStarted = true; track('form_start'); } });
+function setStatus(message, state = '') {
+  if (!note) return;
+  note.textContent = message;
+  note.classList.remove('is-success', 'is-error');
+  if (state) note.classList.add(`is-${state}`);
+}
+form?.addEventListener('submit', async event => {
   event.preventDefault();
-
-  if (submitButton?.disabled) return;
-  if (!contactForm.reportValidity()) return;
-  const data = new FormData(contactForm);
-  data.set("page", window.location.origin + window.location.pathname);
-  const requesterName = String(data.get("name") || "Новый запрос").trim();
-  data.set("subject", `Заявка North Refresh — ${requesterName}`);
-
-  if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.textContent = "Отправляем…";
-  }
-  setFormStatus("Отправляем заявку…");
-
+  if (submitButton?.disabled || !form.reportValidity()) return;
+  const data = new FormData(form);
+  const contact = String(data.get('contact') || '').trim();
+  const name = String(data.get('name') || '').trim();
+  if (!name || !contact) { setStatus('Укажите имя и удобный контакт для связи.', 'error'); return; }
+  data.set('name', name);
+  data.set('contact', contact);
+  data.set('page', window.location.origin + window.location.pathname);
+  data.set('subject', `Запрос North Refresh — ${name}`);
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) data.set('email', contact);
+  submitButton.disabled = true;
+  submitButton.textContent = 'Отправляем…';
+  setStatus('Отправляем запрос…');
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 20000);
   try {
-    const response = await fetch(contactForm.action, {
-      method: "POST",
-      signal: controller.signal,
-      body: data,
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) throw new Error(await getSubmissionError(response));
-
+    const response = await fetch(form.action, {method:'POST', body:data, signal:controller.signal, headers:{Accept:'application/json'}});
+    if (!response.ok) throw new Error('rejected');
     const result = await response.json();
-    if (result.ok !== true) throw new Error("сервис не подтвердил приём заявки");
-    contactForm.reset();
-    setPeople(12);
-    setFormStatus("Сервис принял заявку. Если ответа нет в течение рабочего дня, свяжитесь с нами по email ниже.", "success");
-    if (submitButton) submitButton.textContent = "Заявка отправлена";
+    if (result.ok !== true) throw new Error('unconfirmed');
+    form.reset();
+    formStarted = false;
+    track('form_success');
+    setStatus('Запрос принят. Свяжемся по указанному контакту. Если ответа нет в течение рабочего дня, напишите на max_brus@mail.ru.', 'success');
+    submitButton.textContent = 'Запрос отправлен';
   } catch (error) {
-    console.error("Form submission failed", error);
-    const rawReason = error instanceof Error ? error.message : "неизвестная ошибка";
-    const timedOut = error instanceof Error && error.name === "AbortError";
-    const networkFailure = /failed to fetch|load failed|network|fetch/i.test(rawReason);
-    const reason = timedOut ? "не удалось дождаться подтверждения; заявка могла быть принята — проверьте перед повторной отправкой" : networkFailure
-      ? "браузер не смог соединиться с сервисом отправки"
-      : rawReason;
-    setFormStatus(`Не удалось отправить заявку: ${reason}. Попробуйте ещё раз или воспользуйтесь ссылкой email в разделе «Контакты».`, "error");
-    if (submitButton) submitButton.textContent = "Повторить отправку";
-  } finally {
-    window.clearTimeout(timeout);
-    if (submitButton) {
-      submitButton.disabled = false;
-      window.setTimeout(() => {
-        submitButton.textContent = defaultSubmitText;
-      }, 4000);
-    }
-  }
+    track('form_error');
+    setStatus(error?.name === 'AbortError'
+      ? 'Не получили подтверждение отправки. Запрос мог быть принят. Чтобы избежать повтора, напишите на max_brus@mail.ru.'
+      : 'Не удалось подтвердить отправку. Данные сохранены в форме. Попробуйте ещё раз или напишите на max_brus@mail.ru.', 'error');
+    submitButton.textContent = 'Повторить отправку';
+  } finally { window.clearTimeout(timeout); submitButton.disabled = false; }
 });
